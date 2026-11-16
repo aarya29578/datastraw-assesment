@@ -21,7 +21,10 @@ const app = express();
 
 // Global Middlewares
 app.use(cors({
-  origin: '*',
+  origin: [
+        "http://localhost:5173",
+        "https://datastraw-assesment.vercel.app"
+    ],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
