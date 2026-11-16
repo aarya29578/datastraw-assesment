@@ -1,5 +1,7 @@
+
 import express from 'express';
 import cors from 'cors';
+
 import employeeRoutes from './modules/employees/employee.routes.js';
 import podRoutes from './modules/pods/pod.routes.js';
 import brandRoutes from './modules/brands/brand.routes.js';
@@ -12,6 +14,7 @@ import conflictRoutes from './modules/conflicts/conflict.routes.js';
 import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
 import exportRoutes from './modules/exports/export.routes.js';
 import authRoutes from './modules/auth/auth.routes.js';
+
 import { notFoundMiddleware } from './middlewares/notFound.middleware.js';
 import { errorMiddleware } from './middlewares/error.middleware.js';
 import { rateLimiterMiddleware } from './middlewares/rateLimiter.middleware.js';
@@ -19,47 +22,100 @@ import { rateLimiterMiddleware } from './middlewares/rateLimiter.middleware.js';
 // Initialize Express Application
 const app = express();
 
-// Global Middlewares
-app.use(cors({
-  origin: [
-        "http://localhost:5173",
-        "https://datastraw-assesment.vercel.app"
+// --------------------------------------------------
+// CORS CONFIGURATION
+// --------------------------------------------------
+
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://datastraw-assesment.vercel.app'
+];
+
+const corsOptions = {
+    origin: (origin, callback) => {
+
+        // Allow requests without an Origin header
+        // Example: server-to-server requests
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        // Allow only configured frontend origins
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        console.error(`[CORS Error] Origin not allowed: ${origin}`);
+
+        return callback(new Error('Origin not allowed by CORS'));
+    },
+
+    methods: [
+        'GET',
+        'POST',
+        'PUT',
+        'PATCH',
+        'DELETE',
+        'OPTIONS'
     ],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+
+    allowedHeaders: [
+        'Content-Type',
+        'Authorization'
+    ],
+
+    optionsSuccessStatus: 204
+};
+
+// Apply CORS before all other middleware and routes
+app.use(cors(corsOptions));
+
+// Explicitly handle preflight OPTIONS requests
+app.options('*', cors(corsOptions));
+
+// --------------------------------------------------
+// GLOBAL MIDDLEWARES
+// --------------------------------------------------
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use(rateLimiterMiddleware);
 
-/**
- * Health Check API
- * GET /api/health
- */
+// --------------------------------------------------
+// HEALTH CHECK API
+// GET /api/health
+// --------------------------------------------------
+
 app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'DataStraw Backend is running',
-    timestamp: new Date().toISOString(),
-  });
+    res.status(200).json({
+        success: true,
+        message: 'DataStraw Backend is running',
+        timestamp: new Date().toISOString()
+    });
 });
 
-/**
- * Root Route for quick browser verification
- */
+// --------------------------------------------------
+// ROOT ROUTE
+// GET /
+// --------------------------------------------------
+
 app.get('/', (req, res) => {
-  res.status(200).json({
-    success: true,
-    name: 'DataStraw Backend API',
-    version: '1.0.0',
-    documentation: '/api/health',
-  });
+    res.status(200).json({
+        success: true,
+        name: 'DataStraw Backend API',
+        version: '1.0.0',
+        documentation: '/api/health'
+    });
 });
 
-/**
- * Feature Module Routes
- */
+// --------------------------------------------------
+// FEATURE MODULE ROUTES
+// --------------------------------------------------
+
 app.use('/api/auth', authRoutes);
+
 app.use('/api/employees', employeeRoutes);
 app.use('/api/pods', podRoutes);
 app.use('/api/brands', brandRoutes);
@@ -72,10 +128,17 @@ app.use('/api/conflicts', conflictRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/exports', exportRoutes);
 
-// 404 Route Not Found Middleware
+// --------------------------------------------------
+// 404 ROUTE NOT FOUND MIDDLEWARE
+// --------------------------------------------------
+
 app.use(notFoundMiddleware);
 
-// Centralized Error-Handling Middleware
+// --------------------------------------------------
+// CENTRALIZED ERROR-HANDLING MIDDLEWARE
+// --------------------------------------------------
+
 app.use(errorMiddleware);
 
+// Export Express Application
 export default app;
