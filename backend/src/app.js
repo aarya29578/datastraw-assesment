@@ -26,65 +26,54 @@ const app = express();
 // CORS CONFIGURATION
 // --------------------------------------------------
 
+
 const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-
-    // Main Vercel production domain
-    'https://datastraw-assessment.vercel.app',
-
-    // Current Vercel deployment domain
-    'https://datastraw-assessment-jfsigql7h-aarya-2c0a.vercel.app',
-
-    // Git main deployment domain
-    'https://datastraw-assessment-git-main-aarya-2c0a.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://datastraw-assessment.vercel.app',
+  'https://datastraw-assessment-68j5g9vyp-aarya-2c0a.vercel.app',
 ];
 
 const corsOptions = {
-    origin: (origin, callback) => {
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
 
-        // Allow requests without an Origin header
-        if (!origin) {
-            return callback(null, true);
-        }
+    let hostname;
 
-        // Allow configured frontend domains
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
+    try {
+      hostname = new URL(origin).hostname;
+    } catch {
+      return callback(new Error('Invalid origin'));
+    }
 
-        // Allow preview deployments belonging to this Vercel project
-        const isVercelPreview =
-            /^https:\/\/datastraw-assessment-[a-z0-9-]+-aarya-2c0a\.vercel\.app$/.test(origin);
+    const isAllowedVercelPreview =
+      hostname.startsWith('datastraw-assessment-') &&
+      hostname.endsWith('.vercel.app');
 
-        if (isVercelPreview) {
-            return callback(null, true);
-        }
+    if (
+      allowedOrigins.includes(origin) ||
+      isAllowedVercelPreview
+    ) {
+      return callback(null, true);
+    }
 
-        console.error('[CORS Error] Origin not allowed:', origin);
+    console.error('[CORS Error] Blocked origin:', origin);
+    return callback(new Error('Origin not allowed by CORS'));
+  },
 
-        return callback(new Error('Origin not allowed by CORS'));
-    },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
-    methods: [
-        'GET',
-        'POST',
-        'PUT',
-        'PATCH',
-        'DELETE',
-        'OPTIONS'
-    ],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 
-    allowedHeaders: [
-        'Content-Type',
-        'Authorization'
-    ],
-
-    optionsSuccessStatus: 204
+  optionsSuccessStatus: 204,
 };
 
-// Apply CORS before all other middleware and routes
 app.use(cors(corsOptions));
+
+
+
 
 // --------------------------------------------------
 // GLOBAL MIDDLEWARES
