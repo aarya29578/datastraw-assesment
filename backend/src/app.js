@@ -26,51 +26,7 @@ const app = express();
 // CORS CONFIGURATION
 // --------------------------------------------------
 
-
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'https://datastraw-assessment.vercel.app',
-  'https://datastraw-assessment-68j5g9vyp-aarya-2c0a.vercel.app',
-];
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    let hostname;
-
-    try {
-      hostname = new URL(origin).hostname;
-    } catch {
-      return callback(new Error('Invalid origin'));
-    }
-
-    const isAllowedVercelPreview =
-      hostname.startsWith('datastraw-assessment-') &&
-      hostname.endsWith('.vercel.app');
-
-    if (
-      allowedOrigins.includes(origin) ||
-      isAllowedVercelPreview
-    ) {
-      return callback(null, true);
-    }
-
-    console.error('[CORS Error] Blocked origin:', origin);
-    return callback(new Error('Origin not allowed by CORS'));
-  },
-
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-
-  allowedHeaders: ['Content-Type', 'Authorization'],
-
-  optionsSuccessStatus: 204,
-};
-
-app.use(cors(corsOptions));
+app.use(cors());
 
 
 
